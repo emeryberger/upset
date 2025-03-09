@@ -1,14 +1,10 @@
-import ctypes
-
 class A:
     def __init__(self, v):
         self.v = v
-        self.pad = ctypes.create_string_buffer(1)
        
     def __repr__(self):
-        return f"A({self.v})"
-    
+        return f"0000000000000{self.v}"
 
-orig_list = [A(i) for i in range(10)]
+orig_list = [A(i) for i in range(100)]
 x = list(set(orig_list))
 print(x[0])
