@@ -70,6 +70,12 @@ set_target_properties(upset PROPERTIES
   OUTPUT_NAME "upset"
 )
 
+install(TARGETS upset
+        LIBRARY DESTINATION .
+        RUNTIME DESTINATION .  # For Windows .dll, if relevant
+        ARCHIVE DESTINATION .  # For static libs, if ever used
+)
+
 
 #
 # ─── USAGE ────────────────────────────────────────────────────────────
