@@ -42,6 +42,7 @@ def main(environment, runs, program, maxrange):
         # Run program in "vanilla" mode
         result = subprocess.check_output(["python3", program])
         # Decode the output to a string, strip whitespace, convert to int
+        # print(result.decode())
         vanilla_results.append(int(result.decode().strip()))
 
     # --- 2) Collect results for the environment-variables scenario ---
@@ -56,6 +57,7 @@ def main(environment, runs, program, maxrange):
     for _ in range(runs):
         # Run with extra environment vars
         result = subprocess.check_output(["python3", program], env=env_dict)
+        # print(result.decode())
         env_results.append(int(result.decode().strip()))
 
     # --- 3) Put results into a pandas DataFrame for plotting ---
@@ -79,6 +81,7 @@ def main(environment, runs, program, maxrange):
     plt.tight_layout()
     # plt.show()
     plt.savefig("histogram.pdf", format="pdf", bbox_inches="tight") 
-
+    print("Saved histogram.pdf.")
+    
 if __name__ == '__main__':
     main()
