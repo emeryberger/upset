@@ -22,3 +22,12 @@ DYLD_INSERT_LIBRARIES=/usr/local/libupset.dylib PYTHONMALLOC=malloc python3 test
 ```bash
 LD_PRELOAD=/usr/local/libupset.so PYTHONMALLOC=malloc python3 test/setmeup.py
 ```
+
+# test (Mac)
+
+```bash
+cd test
+python3 histogram.py --program setmeup.py --runs 1000 --maxrange 16 --environment="DYLD_INSERT_LIBRARIES=$PWD/../build/libupset.dylib PYTHONMALLOC=malloc"
+open histogram.pdf
+```
+
