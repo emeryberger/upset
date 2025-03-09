@@ -77,8 +77,8 @@ def main(environment, runs, program, maxrange):
     plt.xlabel(f"Number Returned by {program}")
     plt.ylabel("Frequency")
     plt.tight_layout()
-    plt.show()
-
+    # plt.show()
+    plt.savefig("histogram.pdf", format="pdf", bbox_inches="tight") 
 
 if __name__ == '__main__':
     main()
