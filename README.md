@@ -6,7 +6,7 @@ fuzzes addresses (and thus, `set`s in Python)
 
 ```bash
 mkdir build && cd build
-cmake -DCMAKE_BUILD_TYPE=Release  ..
+cmake -DCMAKE_BUILD_TYPE=Release ../src
 make
 make install
 ```

@@ -64,16 +64,19 @@ endif()
 
 add_library(upset SHARED ${UPSET_SOURCES})
 # Link with pthread/dl on Unix-like systems; on Windows, CMake will adjust automatically
-target_link_libraries(upset PRIVATE pthread dl)
+target_link_libraries(upset PUBLIC pthread dl)
 # Output the final library name as libXXX.so/.dylib on most platforms
 set_target_properties(upset PROPERTIES
-  OUTPUT_NAME "upset"
+    PREFIX ""
+    LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib"
+    OUTPUT_NAME "libupset"
 )
 
+# Installation rules
 install(TARGETS upset
-        LIBRARY DESTINATION .
-        RUNTIME DESTINATION .  # For Windows .dll, if relevant
-        ARCHIVE DESTINATION .  # For static libs, if ever used
+    LIBRARY DESTINATION python/libupset
+    RUNTIME DESTINATION python/libupset
 )
 
 
