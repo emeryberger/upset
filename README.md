@@ -23,7 +23,7 @@ DYLD_INSERT_LIBRARIES=/usr/local/libupset.dylib PYTHONMALLOC=malloc python3 test
 LD_PRELOAD=/usr/local/libupset.so PYTHONMALLOC=malloc python3 test/setmeup.py
 ```
 
-# test (Mac)
+## test (Mac)
 
 ```bash
 cd test
