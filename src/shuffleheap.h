@@ -49,14 +49,14 @@ public:
 private:
 
   void fillBuffer(size_t sz) {
-      // Get an object from the superheap and see how big it really is;
-      // fill the buffer and then use that request size going forwards.
-      void * ptr = SuperHeap::malloc(sz);
-      size_t s   = SuperHeap::getSize(ptr);
-      SuperHeap::free (ptr);
-      _reqSize = s;
-      assert(sz <= s);
-      fill(_reqSize);
+    // Get an object from the superheap and see how big it really is;
+    // fill the buffer and then use that request size going forwards.
+    void * ptr = SuperHeap::malloc(sz);
+    size_t s   = SuperHeap::getSize(ptr);
+    SuperHeap::free (ptr);
+    _reqSize = s;
+    assert(sz <= s);
+    fill(_reqSize);
   }
   
   void fill (size_t sz) {
