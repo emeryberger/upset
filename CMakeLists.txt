@@ -1,27 +1,16 @@
 cmake_minimum_required(VERSION 3.15)
 project(upset LANGUAGES CXX)
 
-#
-# ─── OPTIONS ──────────────────────────────────────────────────────────
-#
-
-# Default to C++14 (adjust as desired)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-# Generate position-independent code; required for shared libraries on many platforms
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #
-# ─── INCLUDE DIRECTORIES ──────────────────────────────────────────────
+# ─── FETCH DEPENDENCIES ──────────────────────────────────────────────────────────
 #
-
-include_directories(
-  ${PROJECT_SOURCE_DIR}
-  ${PROJECT_SOURCE_DIR}/include
-)
-
 include(FetchContent)
+
+# Heap-Layers
 FetchContent_Declare(
   Heap-Layers
   GIT_REPOSITORY https://github.com/emeryberger/Heap-Layers.git
@@ -30,26 +19,17 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Heap-Layers)
 include_directories(${heap-layers_SOURCE_DIR})
 
-
-include(FetchContent)
-FetchContent_Declare(
-  printf
-  GIT_REPOSITORY https://github.com/emeryberger/printf.git
-  GIT_TAG        master
-)
-FetchContent_MakeAvailable(printf)
-include_directories(${printf_SOURCE_DIR})
-
+#
+# ─── SOURCES ─────────────────────────────────────────────────────────────────────
+#
 set(UNIX_SOURCES
   ${heap-layers_SOURCE_DIR}/wrappers/gnuwrapper.cpp
   src/libupset.cpp
-  ${printf_SOURCE_DIR}/printf.cpp
 )
 
 set(MACOS_SOURCES
   ${heap-layers_SOURCE_DIR}/wrappers/macwrapper.cpp
   src/libupset.cpp
-  ${printf_SOURCE_DIR}/printf.cpp
 )
 
 if(APPLE)
@@ -59,41 +39,41 @@ else()
 endif()
 
 #
-# ─── UPSET LIBRARY ────────────────────────────
+# ─── BUILD A SHARED LIBRARY (NOT MODULE) ──────────────────────────────────────
 #
-
+# `SHARED` => A real dynamic library on macOS (Mach-O dylib),
+#   so it can be injected via DYLD_INSERT_LIBRARIES.
+#
+# `MODULE` => A "bundle" on macOS, which CANNOT be injected. Avoid that.
+#
 add_library(upset SHARED ${UPSET_SOURCES})
-# Link with pthread/dl on Unix-like systems; on Windows, CMake will adjust automatically
-target_link_libraries(upset PRIVATE pthread dl)
-# Output the final library name as libXXX.so/.dylib on most platforms
+target_link_libraries(upset PUBLIC pthread dl)
+
+# Make final name "libupset" (=> "libupset.dylib" on macOS, "libupset.so" on Linux).
 set_target_properties(upset PROPERTIES
-  OUTPUT_NAME "upset"
+    PREFIX ""       # Remove the default "lib" prefix
+    OUTPUT_NAME "libupset"
 )
 
+#
+# ─── INSTALLATION ───────────────────────────────────────────────────────────────
+#
+# Installs the library into the "upset/" folder so that scikit-build can place
+# "libupset.dylib" (or ".so") in site-packages/upset/ after `pip install .`.
+#
 install(TARGETS upset
-        LIBRARY DESTINATION .
-        RUNTIME DESTINATION .  # For Windows .dll, if relevant
-        ARCHIVE DESTINATION .  # For static libs, if ever used
+    LIBRARY DESTINATION upset
+    RUNTIME DESTINATION upset
 )
 
-
 #
-# ─── USAGE ────────────────────────────────────────────────────────────
+# ─── NOTES ──────────────────────────────────────────────────────────────────────
 #
-# Typical usage:
-#   mkdir build && cd build
-#   cmake -DCMAKE_BUILD_TYPE=Release ..
-#   cmake --build .
+# After this is built & installed (via pip/scikit-build), you can do:
+#   DYLD_INSERT_LIBRARIES=/path/to/libupset.dylib python script.py
+# on macOS. Or, for Linux:
+#   LD_PRELOAD=/path/to/libupset.so python script.py
 #
-# If you wish to enable replicated mode:
-#   cmake -DBUILD_REPLICATED=ON ..
+# The critical fix: "SHARED" instead of "MODULE" so macOS sees a true .dylib.
 #
-# You now have libdiehard, optionally libdieharder, and optionally
-# libdieharder_r, as shared libraries.
-#
-# For Debug builds:
-#   cmake -DCMAKE_BUILD_TYPE=Debug ..
-#
-# Adjust flags, definitions, or compiler features above as needed.
-#
-# ──────────────────────────────────────────────────────────────────────
+# ────────────────────────────────────────────────────────────────────────────────
