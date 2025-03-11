@@ -19,6 +19,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(Heap-Layers)
 include_directories(${heap-layers_SOURCE_DIR})
 
+FetchContent_Declare(
+  mimalloc
+  GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+  GIT_TAG        master
+)
+FetchContent_MakeAvailable(mimalloc)
+
 #
 # ─── SOURCES ─────────────────────────────────────────────────────────────────────
 #

@@ -24,11 +24,12 @@ public:
   }
 };
 
+
 class Shuffler : public ANSIWrapper<
-  LockedHeap<PosixLockType,
-	     HybridHeap<65536,
-			SmallShuffler,
-			GlobalMallocHeap>>> {};
+    LockedHeap<PosixLockType,
+	       HybridHeap<65536,
+			  SmallShuffler,
+			  GlobalMallocHeap>>> {};
 
 class TheCustomHeapType : public Shuffler {};
 

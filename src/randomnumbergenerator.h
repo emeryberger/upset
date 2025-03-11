@@ -12,26 +12,29 @@
 
 #include <random>
 
-//#include "mwc64.h"
-//#include "realrandomvalue.h"
+#include "mwc64.h"
+#include "realrandomvalue.h"
 
 class RandomNumberGenerator {
 public:
 
   RandomNumberGenerator()
-    : gen(rd())
+  //    : gen(rd())
   {
   }
 
-  inline unsigned long next (void) {
-    return distrib(gen);
+  inline unsigned long next() {
+    return _rng.next();
+    // return distrib(gen);
   }
 
 private:
+
+  MWC64 _rng;
   
-  std::random_device rd;  // a seed source for the random number engine
-  std::mt19937 gen; // mersenne_twister_engine seeded with rd()
-  std::uniform_int_distribution<unsigned long> distrib;
+  //  std::random_device rd;  // a seed source for the random number engine
+  //  std::mt19937 gen; // mersenne_twister_engine seeded with rd()
+  //  std::uniform_int_distribution<unsigned long> distrib;
 
 };
 
