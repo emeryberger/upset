@@ -9,7 +9,10 @@
 
 // We will use Mach-O interposition so it's safe to just use malloc heap
 
-class GlobalMallocHeap : public MallocHeap {};
+class GlobalMallocHeap : public MallocHeap {
+public:
+  bool initialized() const { return true; }
+};
 
 #elif defined(__GNUC__) && !defined(__SVR4)
 
@@ -21,12 +24,8 @@ extern "C" {
   size_t kmalloc_usable_size(void *);
 }
 
-#include "kmalloc.c"
-
 class GlobalMallocHeap : public MallocHeap {
 public:
-  
-  //  enum { Alignment = MallocInfo::Alignment };
   
   GlobalMallocHeap()
   {
