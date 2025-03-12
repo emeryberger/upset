@@ -24,21 +24,24 @@ def demonstrate_address_randomization(n):
     r = [o.name for o in obj_set]
     return r
 
+def hashme(x):
+    # Convert entire list to SHA256 and print decimal value of first character
+    import hashlib
+    import json
+    x_json = json.dumps(x, default=lambda o: o.__dict__).encode('utf-8')
+    digest = hashlib.sha256(x_json).hexdigest()
+    return digest
+    #ch = digest[0]
+    #value = int(ch, base=16)
+    #return value
+
+    
 def test_setmeup():
-    x = demonstrate_address_randomization(2)
-    y = demonstrate_address_randomization(2)
-    # print(x)
-    # print(y)
-    print(x == y)
-    # assert(x == y) # True normally, but almost probably not with `upset` (P(fail)=5/6)
-    if False:
-        # Convert entire list to SHA256 and print decimal value of first character
-        import hashlib
-        import json
-        x_json = json.dumps(x, default=lambda o: o.__dict__).encode('utf-8')
-        ch = hashlib.sha256(x_json).hexdigest()[0]
-        value = int(ch, base=16)
-        print(value)
+    hist = set()
+    for i in range(100):
+        x = demonstrate_address_randomization(10)
+        hist.add(hashme(x))
+    print(len(hist))
 
 if __name__ == "__main__":
     # print(hex(id("hello")))

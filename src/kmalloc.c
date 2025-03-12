@@ -344,7 +344,7 @@ size_t kmalloc_usable_size (void * cp)
   	ASSERT(op->ov_rmagic == RMAGIC);
 	ASSERT(*(u_short *)((caddr_t)(op + 1) + op->ov_size) == RMAGIC);
 #endif
-  	return op->ov_index;
+  	return (1 << (op->ov_index + 3));
 }
 /* End EDB */
 

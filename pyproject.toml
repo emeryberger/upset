@@ -28,7 +28,7 @@ classifiers = [
 [tool.scikit-build]
 # The top-level directory is where CMakeLists.txt resides
 cmake.source-dir = "."
-cmake.build-type = "Release"
+cmake.build-type = "Debug" # "Release"
 
 [tool.setuptools]
 # We have exactly one Python package, located in `upset/`

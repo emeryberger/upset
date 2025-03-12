@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project(upset LANGUAGES CXX)
+project(upset LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -20,23 +20,27 @@ FetchContent_MakeAvailable(Heap-Layers)
 include_directories(${heap-layers_SOURCE_DIR})
 
 FetchContent_Declare(
-  mimalloc
-  GIT_REPOSITORY https://github.com/microsoft/mimalloc.git
+  printf
+  GIT_REPOSITORY https://github.com/emeryberger/printf.git
   GIT_TAG        master
 )
-FetchContent_MakeAvailable(mimalloc)
-
+FetchContent_MakeAvailable(printf)
+include_directories(${printf_SOURCE_DIR})
 #
 # ─── SOURCES ─────────────────────────────────────────────────────────────────────
 #
 set(UNIX_SOURCES
   ${heap-layers_SOURCE_DIR}/wrappers/gnuwrapper.cpp
   src/libupset.cpp
+  src/dlmalloc.c
+  ${printf_SOURCE_DIR}/printf.cpp
 )
 
 set(MACOS_SOURCES
   ${heap-layers_SOURCE_DIR}/wrappers/macwrapper.cpp
   src/libupset.cpp
+  src/dlmalloc.c
+  ${printf_SOURCE_DIR}/printf.cpp
 )
 
 if(APPLE)

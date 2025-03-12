@@ -16,12 +16,14 @@ public:
 
 #elif defined(__GNUC__) && !defined(__SVR4)
 
+#define MALLOC_PREFIX(x) dl##x
+
 extern "C" {
-  void * kmalloc(size_t);
-  void kfree(void *);
-  void * kcalloc(size_t, size_t);
-  void * krealloc(void *, size_t);
-  size_t kmalloc_usable_size(void *);
+  void * MALLOC_PREFIX(malloc)(size_t);
+  void MALLOC_PREFIX(free)(void *);
+  void * MALLOC_PREFIX(calloc)(size_t, size_t);
+  void * MALLOC_PREFIX(realloc)(void *, size_t);
+  size_t MALLOC_PREFIX(malloc_usable_size)(void *);
 }
 
 class GlobalMallocHeap : public MallocHeap {
@@ -61,11 +63,11 @@ private:
   typedef void *(*realloc_fn)(void *, size_t);
   typedef size_t (*getsize_fn)(void *);
   
-  malloc_fn real_malloc = kmalloc;
-  free_fn real_free = kfree;
-  calloc_fn real_calloc = kcalloc;
-  realloc_fn real_realloc = krealloc;
-  getsize_fn real_getsize = kmalloc_usable_size;
+  malloc_fn real_malloc = MALLOC_PREFIX(malloc);
+  free_fn real_free = MALLOC_PREFIX(free);
+  calloc_fn real_calloc = MALLOC_PREFIX(calloc);
+  realloc_fn real_realloc = MALLOC_PREFIX(realloc);
+  getsize_fn real_getsize = MALLOC_PREFIX(malloc_usable_size);
 };
 
 #endif
