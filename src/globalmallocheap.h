@@ -16,13 +16,12 @@ public:
 
 #elif defined(__GNUC__) && !defined(__SVR4)
 
-#include <malloc.h>
-
 extern "C" {
-  void* __libc_malloc(size_t);
-  void  __libc_free(void*);
-  void* __libc_realloc(void*, size_t);
-  void * __libc_calloc (size_t n, size_t elem_size);
+  void * kmalloc(size_t);
+  void kfree(void *);
+  void * kcalloc(size_t, size_t);
+  void * krealloc(void *, size_t);
+  size_t kmalloc_usable_size(void *);
 }
 
 class GlobalMallocHeap : public MallocHeap {
@@ -33,30 +32,40 @@ public:
   }
 
   void *malloc(size_t size) {
-    return __libc_malloc(size);
+    return real_malloc(size);
   }
   
   void free(void *ptr) {
-    __libc_free(ptr);
+    real_free(ptr);
   }
 
   void *calloc(size_t nmemb, size_t size) {
-    return __libc_calloc(nmemb, size);
+    void *ptr = real_calloc(nmemb, size);
+    return ptr;
   }
 
   void *realloc(void *ptr, size_t size) {
-    return __libc_realloc(ptr, size);
+    void *new_ptr = real_realloc(ptr, size);
+    return new_ptr;
   }
 
   size_t getSize(void * ptr) {
-    typedef size_t (*getsize_fn)(void *);
-    static getsize_fn real_getsize = (getsize_fn) nullptr;
-    if (!real_getsize) {
-      real_getsize = (getsize_fn) dlsym(RTLD_NEXT, "malloc_usable_size");
-    }
     return real_getsize(ptr);
   }
+  
+private:
 
+  typedef void *(*malloc_fn)(size_t);
+  typedef void (*free_fn)(void *);
+  typedef void *(*calloc_fn)(size_t, size_t);
+  typedef void *(*realloc_fn)(void *, size_t);
+  typedef size_t (*getsize_fn)(void *);
+  
+  malloc_fn real_malloc = kmalloc;
+  free_fn real_free = kfree;
+  calloc_fn real_calloc = kcalloc;
+  realloc_fn real_realloc = krealloc;
+  getsize_fn real_getsize = kmalloc_usable_size;
 };
 
 #endif
