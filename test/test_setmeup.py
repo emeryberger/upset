@@ -37,11 +37,15 @@ def hashme(x):
 
     
 def test_setmeup():
-    hist = set()
-    for i in range(100):
-        x = demonstrate_address_randomization(10)
-        hist.add(hashme(x))
-    print(len(hist))
+    order_hist = set()
+    num_lists = 1000
+    length = 30
+    for i in range(num_lists):
+        x = demonstrate_address_randomization(length)
+        order_hist.add(hashme(x))
+    # Below is almost certainly true with `upset`, and almost certainly false without.
+    # A small number for len(order_hist) corresponds to a low level of randomization
+    assert len(order_hist) == num_lists
 
 if __name__ == "__main__":
     # print(hex(id("hello")))
