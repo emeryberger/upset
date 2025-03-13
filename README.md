@@ -21,7 +21,7 @@ of orders.
 To build the `upset` package for Python, run the following command.
 
 ```bash
-python3 -m pip install .
+python3 -m pip install git+https://github.com/emeryberger/upset
 ```
 
 `upset`'s shared library (`libupset.so`/`.dylib`) can also be built and used directly.
