@@ -9,9 +9,36 @@
 #include <heaplayers>
 
 #include "shuffleheap.h"
+#include "globalmallocheap.h"
+#include <printf.h>
 
-class Shuffler : public ANSIWrapper<LockedHeap<PosixLockType,
-					       KingsleyHeap<ShuffleHeap<1024, MallocHeap>, MallocHeap>>> {};
+#include <unistd.h>
+
+// For use by the replacement printf routines (see
+// https://github.com/mpaland/printf)
+extern "C" void _putchar(char ch) { ::write(1, (void *)&ch, 1); }
+
+template <class S>
+class SuperWrapper : public S {
+public:
+  typedef S Super;
+};
+
+class SmallShuffler : public SuperWrapper<KingsleyHeap<ShuffleHeap<32, GlobalMallocHeap>, GlobalMallocHeap>> {
+public:
+  void * malloc(size_t sz) {
+    auto ptr = Super::malloc(sz);
+    return ptr;
+  }
+};
+
+
+class Shuffler : public ANSIWrapper<
+    LockedHeap<PosixLockType,
+	       //	       SmallShuffler>> {};
+	       HybridHeap<65536,
+			  SmallShuffler,
+			  GlobalMallocHeap>>> {};
 
 class TheCustomHeapType : public Shuffler {};
 
@@ -26,18 +53,6 @@ inline static TheCustomHeapType * getCustomHeap (void) {
 #pragma warning(disable:4273)
 #endif
 
-#include "printf.h"
-
-#if !defined(_WIN32)
-#include <unistd.h>
-
-extern "C" {
-  // For use by the replacement printf routines (see
-  // https://github.com/emeryberger/printf)
-  void _putchar(char ch) { ::write(1, (void *)&ch, 1); }
-}
-#endif
-
 // Heap-Layers
 #include "wrappers/generic-memalign.cpp"
 
@@ -45,7 +60,6 @@ extern "C" {
 
   void * xxmalloc (size_t sz) {
     auto ptr = getCustomHeap()->malloc (sz);
-    // printf_("xxmalloc %lu = %p\n", sz, ptr);
     return ptr;
   }
 
