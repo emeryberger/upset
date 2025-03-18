@@ -11,6 +11,8 @@
 #include "modulo.h"
 #include "randomnumbergenerator.h"
 
+#include <printf.h>
+
 template <int NObjects,
 	  class SuperHeap>
 class ShuffleHeap : public SuperHeap {

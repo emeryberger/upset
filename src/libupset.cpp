@@ -10,6 +10,13 @@
 
 #include "shuffleheap.h"
 #include "globalmallocheap.h"
+#include <printf.h>
+
+#include <unistd.h>
+
+// For use by the replacement printf routines (see
+// https://github.com/mpaland/printf)
+extern "C" void _putchar(char ch) { ::write(1, (void *)&ch, 1); }
 
 template <class S>
 class SuperWrapper : public S {
@@ -17,18 +24,21 @@ public:
   typedef S Super;
 };
 
-class SmallShuffler : public SuperWrapper<KingsleyHeap<ShuffleHeap<1024, GlobalMallocHeap>, GlobalMallocHeap>> {
+class SmallShuffler : public SuperWrapper<KingsleyHeap<ShuffleHeap<32, GlobalMallocHeap>, GlobalMallocHeap>> {
 public:
   void * malloc(size_t sz) {
-    return Super::malloc(sz);
+    auto ptr = Super::malloc(sz);
+    return ptr;
   }
 };
 
+
 class Shuffler : public ANSIWrapper<
-  LockedHeap<PosixLockType,
-	     HybridHeap<65536,
-			SmallShuffler,
-			GlobalMallocHeap>>> {};
+    LockedHeap<PosixLockType,
+	       //	       SmallShuffler>> {};
+	       HybridHeap<65536,
+			  SmallShuffler,
+			  GlobalMallocHeap>>> {};
 
 class TheCustomHeapType : public Shuffler {};
 
