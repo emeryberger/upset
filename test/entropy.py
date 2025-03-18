@@ -87,9 +87,10 @@ def process_and_write(trial_num, output_file, N):
     with open(output_file, 'a') as f:
         f.write(f"{l}\n")
 
-def main():
-    TRIALS = 200 # Replace with your desired number of trials
-    N = 20       # Replace with your desired N
+@click.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+@click.option('--n', type=int, default=20)
+@click.option('--trials', type=int, default=200)
+def main(n, trials):
     
     output_file = "results.txt"
     import os
@@ -103,10 +104,10 @@ def main():
         # Create a partial function with fixed arguments
         process_func = partial(process_and_write, 
                              output_file=output_file,
-                             N=N)
+                             N=n)
         
         # Map the function to trial numbers
-        pool.map(process_func, range(TRIALS))
+        pool.map(process_func, range(trials))
 
     # Now read them back in and compute over them.
     with open(output_file, "r") as f:
@@ -115,7 +116,7 @@ def main():
         items.pop()
 
         print(f"Percentage of duplicate orderings: {100 - (len(set(items)) * 100 / len(items))}%")
-        print(f"  (expected: {100*(TRIALS-expected_unique_shuffles(N, TRIALS))/TRIALS:2.3}%)")
+        print(f"  (expected: {100*(trials-expected_unique_shuffles(n, trials))/trials:2.3}%)")
         print(f"Shannon entropy (number of bits): {shannon_entropy(items)}")
 
 if __name__ == '__main__':
