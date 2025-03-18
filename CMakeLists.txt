@@ -1,90 +1,50 @@
 cmake_minimum_required(VERSION 3.15)
-project(upset LANGUAGES CXX C)
+project(diehard LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 #
-# ─── FETCH DEPENDENCIES ──────────────────────────────────────────────────────────
+# ─── FETCH DIEHARD ───────────────────────────────────────────────────────────────
 #
 include(FetchContent)
 
-# Heap-Layers
 FetchContent_Declare(
-  Heap-Layers
-  GIT_REPOSITORY https://github.com/emeryberger/Heap-Layers.git
+  diehard
+  GIT_REPOSITORY https://github.com/emeryberger/DieHard.git
   GIT_TAG        master
 )
-FetchContent_MakeAvailable(Heap-Layers)
-include_directories(${heap-layers_SOURCE_DIR})
-
-FetchContent_Declare(
-  printf
-  GIT_REPOSITORY https://github.com/emeryberger/printf.git
-  GIT_TAG        master
-)
-FetchContent_MakeAvailable(printf)
-include_directories(${printf_SOURCE_DIR})
-#
-# ─── SOURCES ─────────────────────────────────────────────────────────────────────
-#
-set(UNIX_SOURCES
-  ${heap-layers_SOURCE_DIR}/wrappers/gnuwrapper.cpp
-  src/libupset.cpp
-  src/dlmalloc.c
-  ${printf_SOURCE_DIR}/printf.cpp
-)
-
-set(MACOS_SOURCES
-  ${heap-layers_SOURCE_DIR}/wrappers/macwrapper.cpp
-  src/libupset.cpp
-  src/dlmalloc.c
-  ${printf_SOURCE_DIR}/printf.cpp
-)
-
-if(APPLE)
-  set(UPSET_SOURCES ${MACOS_SOURCES})
-else()
-  set(UPSET_SOURCES ${UNIX_SOURCES})
-endif()
+FetchContent_MakeAvailable(diehard)
 
 #
-# ─── BUILD A SHARED LIBRARY (NOT MODULE) ──────────────────────────────────────
+# ─── ADD DIEHARD (BUILD IT FROM ITS "src" FOLDER) ───────────────────────────────
 #
-# `SHARED` => A real dynamic library on macOS (Mach-O dylib),
-#   so it can be injected via DYLD_INSERT_LIBRARIES.
+# DieHard’s CMakeLists.txt resides in the "src" directory.
 #
-# `MODULE` => A "bundle" on macOS, which CANNOT be injected. Avoid that.
-#
-add_library(upset SHARED ${UPSET_SOURCES})
-target_link_libraries(upset PUBLIC pthread dl)
+add_subdirectory(${diehard_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/diehard-build)
 
-# Make final name "libupset" (=> "libupset.dylib" on macOS, "libupset.so" on Linux).
-set_target_properties(upset PROPERTIES
-    PREFIX ""       # Remove the default "lib" prefix
-    OUTPUT_NAME "libupset"
+#
+# Rename the resulting DieHard library to "libdiehard" for consistency,
+# and ensure it’s built as a normal dynamic library (SHARED).
+# (If the DieHard CMakeLists defines a different target name, adjust accordingly.)
+#
+set_target_properties(diehard PROPERTIES
+    PREFIX ""                 # Remove the default "lib" prefix on Linux/macOS
+    OUTPUT_NAME "libdiehard"  # => "libdiehard.so" or "libdiehard.dylib"
 )
 
 #
 # ─── INSTALLATION ───────────────────────────────────────────────────────────────
 #
-# Installs the library into the "upset/" folder so that scikit-build can place
-# "libupset.dylib" (or ".so") in site-packages/upset/ after `pip install .`.
+# Install the dynamic library into a "diehard/" folder, so that scikit-build
+# places it in site-packages/diehard/ after `pip install .`.
+# Once installed, you can do (on macOS):
+#   DYLD_INSERT_LIBRARIES=/path/to/libdiehard.dylib python script.py
+# or on Linux:
+#   LD_PRELOAD=/path/to/libdiehard.so python script.py
 #
-install(TARGETS upset
-    LIBRARY DESTINATION upset
-    RUNTIME DESTINATION upset
+install(TARGETS diehard
+    LIBRARY DESTINATION upset # diehard
+    RUNTIME DESTINATION upset # diehard
 )
-
-#
-# ─── NOTES ──────────────────────────────────────────────────────────────────────
-#
-# After this is built & installed (via pip/scikit-build), you can do:
-#   DYLD_INSERT_LIBRARIES=/path/to/libupset.dylib python script.py
-# on macOS. Or, for Linux:
-#   LD_PRELOAD=/path/to/libupset.so python script.py
-#
-# The critical fix: "SHARED" instead of "MODULE" so macOS sees a true .dylib.
-#
-# ────────────────────────────────────────────────────────────────────────────────
