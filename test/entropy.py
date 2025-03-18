@@ -51,6 +51,9 @@ class MyObj:
     # No __hash__ override, so the default identity-based hashing is used.
 
 def process_and_write(trial_num, output_file, N):
+    # Force a lot of allocations to warm up the heap
+    objs = [MyObj(f"obj_{i}") for i in range(N * N)]
+    # Now just allocate N objects
     objs = [MyObj(f"obj_{i}") for i in range(N)]
     obj_set = set(objs)
     l = list(o.name for o in obj_set)
@@ -61,7 +64,7 @@ def process_and_write(trial_num, output_file, N):
 
 def main():
     TRIALS = 200 # Replace with your desired number of trials
-    N = 8        # Replace with your desired N
+    N = 20       # Replace with your desired N
     
     output_file = "results.txt"
     import os
