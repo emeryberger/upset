@@ -10,9 +10,9 @@ import subprocess
 def find_libupset_in_site_packages():
     """
     Scans known site-packages directories for:
-       upset/libupset.so
+       upset/libdiehard.so
     or
-       upset/libupset.dylib
+       upset/libdiehard.dylib
     Returns the first match found, or None if not found.
     """
     candidates = set()
@@ -33,11 +33,11 @@ def find_libupset_in_site_packages():
             candidates.add(sp)
 
     for sp in candidates:
-        so_path = os.path.join(sp, "upset", "libupset.so")
+        so_path = os.path.join(sp, "upset", "libdiehard.so")
         if os.path.isfile(so_path):
             return so_path
 
-        dylib_path = os.path.join(sp, "upset", "libupset.dylib")
+        dylib_path = os.path.join(sp, "upset", "libdiehard.dylib")
         if os.path.isfile(dylib_path):
             return dylib_path
 
@@ -74,7 +74,7 @@ def main():
     # Find the installed 'libupset' in site-packages.
     lib_path = find_libupset_in_site_packages()
     if not lib_path:
-        print("ERROR: Could not find 'libupset.so' or '.dylib' in site-packages.\n"
+        print("ERROR: Could not find 'libdiehard.so' or '.dylib' in site-packages.\n"
               "       Did you run `pip install .` (or `pip install -e .`)?",
               file=sys.stderr)
         sys.exit(1)

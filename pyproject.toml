@@ -1,7 +1,7 @@
 [build-system]
-# Use scikit-build-core for building C extensions / libraries
+# Use scikit-build-core (plus setuptools, wheel, and cmake) to build
 requires = [
-    "scikit-build-core>=0.8.0",  # or newer
+    "scikit-build-core>=0.8.0",
     "setuptools>=42",
     "wheel",
     "cmake>=3.18"
@@ -11,7 +11,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "upset"
 version = "0.0.1"
-description = "Fine-grained address fuzzing"
+description = "Upset"
 authors = [
     { name = "Emery Berger", email = "emery.berger@gmail.com" }
 ]
@@ -22,14 +22,14 @@ classifiers = [
     "Development Status :: 3 - Alpha",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
+    "Programming Language :: C++",
     "Programming Language :: Python :: 3",
 ]
 
 [tool.scikit-build]
-# The top-level directory is where CMakeLists.txt resides
+# This points to the directory containing your top-level CMakeLists.txt
 cmake.source-dir = "."
-cmake.build-type = "Release"
+cmake.build-type = "Debug"  # or "Release"
 
 [tool.setuptools]
-# We have exactly one Python package, located in `upset/`
 packages = ["upset"]
