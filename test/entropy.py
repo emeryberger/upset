@@ -115,8 +115,9 @@ def main(n, trials):
         items = item_str.split('\n')
         items.pop()
 
+        print(f"Number of unique orderings: {len(set(items))} out of {len(items)}")
         print(f"Percentage of duplicate orderings: {100 - (len(set(items)) * 100 / len(items))}%")
-        print(f"  (expected: {100*(trials-expected_unique_shuffles(n, trials))/trials:2.3}%)")
+        print(f"  (expected if random: {100*(trials-expected_unique_shuffles(n, trials))/trials:2.3}%)")
         print(f"Shannon entropy (number of bits): {shannon_entropy(items)}")
 
 if __name__ == '__main__':
