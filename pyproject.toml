@@ -4,6 +4,7 @@ requires = [
     "scikit-build-core>=0.8.0",
     "setuptools>=42",
     "wheel",
+    "click>=8.1.0",    
     "cmake>=3.18"
 ]
 build-backend = "scikit_build_core.build"

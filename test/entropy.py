@@ -1,31 +1,56 @@
 import click
 import math
 import multiprocessing as mp
-from collections import Counter
-from functools import partial
 import random
 
-#def expected_unique_shuffles(N, T):
-#    return math.factorial(N) * (1 - (1 - 1 / math.factorial(N)) ** T)
+from collections import Counter
+from decimal import Decimal, getcontext
+from functools import partial
+
 
 def expected_unique_shuffles(N, T):
     """
     Calculate the expected number of unique shuffles when shuffling N items T times.
+    Uses logarithms and Decimal for numerical stability with large numbers.
     
     Args:
     N (int): Number of items being shuffled
-    T (int): Number of shuffle operations
+    T (int): Number of times shuffling
     
     Returns:
     float: Expected number of unique shuffles
     """
-    n_factorial = math.factorial(N)
-   
-    # The exact formula: N! * (1 - (1 - 1/N!)^T)
-    probability = 1 - (1 - 1/n_factorial) ** T
-    expected = n_factorial * probability
+    if N < 0 or T < 0:
+        raise ValueError("N and T must be non-negative")
     
-    return expected
+    if N == 0 or T == 0:
+        return 0
+    
+    if N == 1:
+        return 1
+
+    # Set precision for Decimal calculations
+    getcontext().prec = 100
+
+    # Calculate log(N!)
+    log_n_factorial = sum(math.log(i) for i in range(1, N + 1))
+
+    # For large N, (1 - 1/N!)^T can be approximated using exp(-T/N!)
+    # This is more numerically stable than the direct calculation
+    if N > 15:  # threshold where we switch to approximation
+        # Using log space to handle large numbers
+        ratio = -Decimal(T) * Decimal(math.exp(-log_n_factorial))
+        probability = Decimal(1) - Decimal(ratio.exp())
+        result = float(probability * Decimal(math.exp(log_n_factorial)))
+    else:
+        # For smaller N, we can use the direct calculation
+        n_factorial = math.factorial(N)
+        probability = 1 - (1 - 1/n_factorial) ** T
+        result = n_factorial * probability
+
+    result = result if result <= T else T
+    return result
+
 
 
 def shannon_entropy(data):
@@ -51,6 +76,9 @@ class MyObj:
     # No __hash__ override, so the default identity-based hashing is used.
 
 def process_and_write(trial_num, output_file, N):
+    # Force a lot of allocations to warm up the heap
+    objs = [MyObj(f"obj_{i}") for i in range(N * N)]
+    # Now just allocate N objects
     objs = [MyObj(f"obj_{i}") for i in range(N)]
     obj_set = set(objs)
     l = list(o.name for o in obj_set)
@@ -59,9 +87,10 @@ def process_and_write(trial_num, output_file, N):
     with open(output_file, 'a') as f:
         f.write(f"{l}\n")
 
-def main():
-    TRIALS = 200 # Replace with your desired number of trials
-    N = 8        # Replace with your desired N
+@click.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
+@click.option('--n', type=int, default=20)
+@click.option('--trials', type=int, default=200)
+def main(n, trials):
     
     output_file = "results.txt"
     import os
@@ -75,10 +104,10 @@ def main():
         # Create a partial function with fixed arguments
         process_func = partial(process_and_write, 
                              output_file=output_file,
-                             N=N)
+                             N=n)
         
         # Map the function to trial numbers
-        pool.map(process_func, range(TRIALS))
+        pool.map(process_func, range(trials))
 
     # Now read them back in and compute over them.
     with open(output_file, "r") as f:
@@ -87,7 +116,7 @@ def main():
         items.pop()
 
         print(f"Percentage of duplicate orderings: {100 - (len(set(items)) * 100 / len(items))}%")
-        print(f"  (expected: {100*(TRIALS-expected_unique_shuffles(N, TRIALS))/TRIALS:2.3}%)")
+        print(f"  (expected: {100*(trials-expected_unique_shuffles(n, trials))/trials:2.3}%)")
         print(f"Shannon entropy (number of bits): {shannon_entropy(items)}")
 
 if __name__ == '__main__':
