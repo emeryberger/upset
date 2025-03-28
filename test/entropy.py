@@ -7,6 +7,46 @@ from collections import Counter
 from decimal import Decimal, getcontext
 from functools import partial
 
+def theoretical_expected_inversions(M, N):
+    return (M * (M-1) * N * (N-1)) / 8
+
+
+def count_inversions_between_lists(list1, list2):
+    """
+    Count inversions between two lists.
+    An inversion occurs when elements i,j appear in different order in the two lists.
+    """
+    # Create a position map for the second list
+    pos_map = {val: idx for idx, val in enumerate(list2)}
+    
+    inversions = 0
+    n = len(list1)
+    
+    # For each pair of elements in list1, check if they're inverted in list2
+    for i in range(n):
+        for j in range(i + 1, n):
+            # If element at position i comes after element at position j in list2,
+            # it's an inversion
+            if pos_map[list1[i]] > pos_map[list1[j]]:
+                inversions += 1
+                
+    return inversions
+
+def count_all_list_pair_inversions(lists):
+    """
+    Count inversions between all pairs of lists in the input.
+    """
+    total_inversions = 0
+    m = len(lists)
+    
+    # Compare each pair of lists
+    for i in range(m):
+        for j in range(i + 1, m):
+            inversions = count_inversions_between_lists(lists[i], lists[j])
+            total_inversions += inversions
+            
+    return total_inversions
+
 
 def expected_unique_shuffles(N, T):
     """
@@ -113,8 +153,22 @@ def main(n, trials):
     with open(output_file, "r") as f:
         item_str = f.read()
         items = item_str.split('\n')
-        items.pop()
+        lists = set()
+        for i in range(len(items)):
+            import ast
+            try:
+                this_item = ast.literal_eval(items[i])
+                lists.add(tuple(this_item))
+            except SyntaxError:
+                pass
 
+        reduced_lists = list(map(lambda x: list(x), lists))
+        inversions = count_all_list_pair_inversions(reduced_lists)
+        print(f"N={n}, trials={trials}")
+        print(f"actual inversions: {inversions}")
+        print(f"expected inversions: {theoretical_expected_inversions(trials, n)}")
+        print(f"ratio (actual over expected inversions): {(100 * inversions / theoretical_expected_inversions(trials, n)):2.3}%")
+        
         print(f"Number of unique orderings: {len(set(items))} out of {len(items)}")
         print(f"Percentage of duplicate orderings: {100 - (len(set(items)) * 100 / len(items))}%")
         print(f"  (expected if random: {100*(trials-expected_unique_shuffles(n, trials))/trials:2.3}%)")
