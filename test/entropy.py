@@ -127,6 +127,34 @@ def process_and_write(trial_num, output_file, N):
     with open(output_file, 'a') as f:
         f.write(f"{l}\n")
 
+from decimal import Decimal, getcontext
+from typing import List, Union
+import numpy as np
+
+def expected_trials_to_non_duplicate(p: List[Union[float, Decimal]], prec: int = 50) -> Decimal:
+    """
+    Compute the expected number of draws (with replacement) until
+    you draw a value you have NOT seen before (i.e., first "new" outcome),
+    given probabilities p_i for each of N choices.
+
+    Formula:
+      E[T] = 1 + sum_{i=1}^N ( p_i / (1 - p_i) )
+    because with probability p_i you start with i, then wait Geom(1-p_i) for a different.
+    """
+    # Use Decimal for precision if any p_i are Decimal
+    getcontext().prec = prec
+    # Convert all p_i to Decimal
+    p_dec = [Decimal(pi) for pi in p]
+
+    result = Decimal(1)  # first draw is always "new"
+    for pi in p_dec:
+        if pi == 1:
+            # If one type has probability 1, you'll never see a different type
+            return Decimal('Infinity')
+        result += pi / (Decimal(1) - pi)
+    return result
+
+        
 @click.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 @click.option('--n', type=int, default=20)
 @click.option('--trials', type=int, default=200)
@@ -164,6 +192,18 @@ def main(n, trials):
 
         reduced_lists = list(map(lambda x: list(x), lists))
         inversions = count_all_list_pair_inversions(reduced_lists)
+
+        import ast
+        from collections import Counter
+        parsed = [tuple(ast.literal_eval(s)) for s in items if s.strip()]
+        counts = Counter(parsed)
+
+        fractions = [Decimal(count) / Decimal(sum(counts.values())) for count in counts.values()]
+        getcontext().prec = 50
+        e_nondup = expected_trials_to_non_duplicate(fractions)
+        print(f"Expected draws to first non-duplicate ≈ {e_nondup}")
+        
+    
         print(f"N={n}, trials={trials}")
         print(f"actual inversions: {inversions}")
         print(f"expected inversions: {theoretical_expected_inversions(trials, n)}")
