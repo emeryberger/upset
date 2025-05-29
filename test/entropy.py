@@ -154,7 +154,43 @@ def expected_trials_to_non_duplicate(p: List[Union[float, Decimal]], prec: int =
         result += pi / (Decimal(1) - pi)
     return result
 
-        
+
+from itertools import combinations
+from scipy.stats import kendalltau
+
+import numpy as np
+
+
+from itertools import combinations
+from typing import List, Dict
+
+def kendall_tau_distance(p1: List[str], p2: List[str]) -> int:
+    """Compute the Kendall tau distance (number of pairwise inversions) between two permutations of strings."""
+    n: int = len(p1)
+    
+    # Build inverse map for p2
+    pos_map: Dict[str, int] = {val: idx for idx, val in enumerate(p2)}
+    mapped: List[int] = [pos_map[val] for val in p1]
+
+    # Count inversions in mapped list
+    inv_count: int = 0
+    for i in range(n):
+        for j in range(i + 1, n):
+            if mapped[i] > mapped[j]:
+                inv_count += 1
+    return inv_count
+
+def mean_pairwise_kendall_tau(perms: List[List[str]]) -> float:
+    """Compute the normalized mean pairwise Kendall tau distance across a list of string permutations."""
+    M: int = len(perms)
+    N: int = len(perms[0])
+    total: int = 0
+    for i, j in combinations(range(M), 2):
+        total += kendall_tau_distance(perms[i], perms[j])
+    mean_distance: float = (2 * total) / (M * (M - 1))
+    normalized: float = mean_distance / (N * (N - 1) / 2)
+    return mean_distance # normalized
+
 @click.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 @click.option('--n', type=int, default=20)
 @click.option('--trials', type=int, default=200)
@@ -192,19 +228,20 @@ def main(n, trials):
 
         reduced_lists = list(map(lambda x: list(x), lists))
         inversions = count_all_list_pair_inversions(reduced_lists)
+        kendall_dist = mean_pairwise_kendall_tau(reduced_lists)
 
         import ast
         from collections import Counter
         parsed = [tuple(ast.literal_eval(s)) for s in items if s.strip()]
         counts = Counter(parsed)
 
-        fractions = [Decimal(count) / Decimal(sum(counts.values())) for count in counts.values()]
-        getcontext().prec = 50
-        e_nondup = expected_trials_to_non_duplicate(fractions)
-        print(f"Expected draws to first non-duplicate ≈ {e_nondup}")
-        
-    
+        #fractions = [Decimal(count) / Decimal(sum(counts.values())) for count in counts.values()]
+        #getcontext().prec = 50
+        #e_nondup = expected_trials_to_non_duplicate(fractions)
+        #print(f"Expected draws to first non-duplicate ≈ {e_nondup}")
+
         print(f"N={n}, trials={trials}")
+        print(f"Mean Kendall distance: {kendall_dist}")
         print(f"actual inversions: {inversions}")
         print(f"expected inversions: {theoretical_expected_inversions(trials, n)}")
         print(f"ratio (actual over expected inversions): {(100 * inversions / theoretical_expected_inversions(trials, n)):2.3}%")
