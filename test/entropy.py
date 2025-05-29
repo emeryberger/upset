@@ -2,6 +2,21 @@ import click
 import math
 import multiprocessing as mp
 import random
+import click
+import math
+import random
+import fcntl
+import os
+from functools import partial
+from collections import Counter
+from decimal import Decimal, getcontext
+from itertools import combinations
+import multiprocessing as mp
+
+
+def init(lock):
+    global mplock
+    mplock = lock
 
 from collections import Counter
 from decimal import Decimal, getcontext
@@ -116,6 +131,27 @@ class MyObj:
     # No __hash__ override, so the default identity-based hashing is used.
 
 def process_and_write(trial_num, output_file, N):
+    # warm-up allocations (as before)
+    objs = [MyObj(f"obj_{i}") for i in range(N*N)]
+    objs = [MyObj(f"obj_{i}") for i in range(N)]
+    obj_set = set(objs)
+    l = list(o.name for o in obj_set)
+    # random.shuffle(l)
+
+    # atomic append + file-lock guard
+    with open(output_file, "a+") as f:
+        # acquire an exclusive lock on the open file descriptor
+        fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+        try:
+            f.write(f"{l}\n")
+            f.flush()
+            os.fsync(f.fileno())
+        finally:
+            # release the lock
+            fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+
+def old_process_and_write(trial_num, output_file, N):
+    print(trial_num)
     # Force a lot of allocations to warm up the heap
     objs = [MyObj(f"obj_{i}") for i in range(N * N)]
     # Now just allocate N objects
@@ -124,8 +160,10 @@ def process_and_write(trial_num, output_file, N):
     l = list(o.name for o in obj_set)
     # random.shuffle(l) # FIXME
 
-    with open(output_file, 'a') as f:
-        f.write(f"{l}\n")
+    global mplock
+    with mplock:
+        with open(output_file, 'a') as f:
+            f.write(f"{l}\n")
 
 from decimal import Decimal, getcontext
 from typing import List, Union
@@ -184,12 +222,13 @@ def mean_pairwise_kendall_tau(perms: List[List[str]]) -> float:
     """Compute the normalized mean pairwise Kendall tau distance across a list of string permutations."""
     M: int = len(perms)
     N: int = len(perms[0])
+    print(f"{M=} {N=}")
     total: int = 0
     for i, j in combinations(range(M), 2):
         total += kendall_tau_distance(perms[i], perms[j])
     mean_distance: float = (2 * total) / (M * (M - 1))
     normalized: float = mean_distance / (N * (N - 1) / 2)
-    return mean_distance # normalized
+    return normalized
 
 @click.command(context_settings={"allow_extra_args": True, "ignore_unknown_options": True})
 @click.option('--n', type=int, default=20)
@@ -203,8 +242,10 @@ def main(n, trials):
     except FileNotFoundError:
         pass
 
+    lock = mp.Lock()
+    
     # Create a pool of processes
-    with mp.Pool() as pool:
+    with mp.Pool(initializer=init, initargs=(lock,)) as pool:
         # Create a partial function with fixed arguments
         process_func = partial(process_and_write, 
                              output_file=output_file,
@@ -218,17 +259,20 @@ def main(n, trials):
         item_str = f.read()
         items = item_str.split('\n')
         lists = set()
+        actual_lists = []
         for i in range(len(items)):
             import ast
             try:
                 this_item = ast.literal_eval(items[i])
                 lists.add(tuple(this_item))
+                actual_lists.append(this_item)
             except SyntaxError:
                 pass
 
         reduced_lists = list(map(lambda x: list(x), lists))
-        inversions = count_all_list_pair_inversions(reduced_lists)
-        kendall_dist = mean_pairwise_kendall_tau(reduced_lists)
+        inversions = count_all_list_pair_inversions(actual_lists)
+        print(inversions)
+        kendall_dist = mean_pairwise_kendall_tau(actual_lists)
 
         import ast
         from collections import Counter
