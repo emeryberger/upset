@@ -131,15 +131,24 @@ class MyObj:
     # No __hash__ override, so the default identity-based hashing is used.
 
 def process_and_write(trial_num, output_file, N):
-    # warm-up allocations (as before)
-    objs = [MyObj(f"obj_{i}") for i in range(N*N)]
+    # warm-up allocations
+    # objs = [MyObj(f"obj_{i}") for i in range(N*N)]
     objs = [MyObj(f"obj_{i}") for i in range(N)]
     obj_set = set(objs)
     l = list(o.name for o in obj_set)
     # random.shuffle(l)
 
+    global mplock
+    with mplock:
+        with open(output_file, 'a+') as f:
+            f.write(f"{l}\n")
+            f.flush()
+            os.fsync(f.fileno())
+
+            
+def old_process_and_write(trial_num, output_file, N):
     # atomic append + file-lock guard
-    with open(output_file, "a+") as f:
+    if False: # with open(output_file, "a+") as f:
         # acquire an exclusive lock on the open file descriptor
         fcntl.flock(f.fileno(), fcntl.LOCK_EX)
         try:
@@ -149,21 +158,6 @@ def process_and_write(trial_num, output_file, N):
         finally:
             # release the lock
             fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-
-def old_process_and_write(trial_num, output_file, N):
-    print(trial_num)
-    # Force a lot of allocations to warm up the heap
-    objs = [MyObj(f"obj_{i}") for i in range(N * N)]
-    # Now just allocate N objects
-    objs = [MyObj(f"obj_{i}") for i in range(N)]
-    obj_set = set(objs)
-    l = list(o.name for o in obj_set)
-    # random.shuffle(l) # FIXME
-
-    global mplock
-    with mplock:
-        with open(output_file, 'a') as f:
-            f.write(f"{l}\n")
 
 from decimal import Decimal, getcontext
 from typing import List, Union
@@ -222,7 +216,6 @@ def mean_pairwise_kendall_tau(perms: List[List[str]]) -> float:
     """Compute the normalized mean pairwise Kendall tau distance across a list of string permutations."""
     M: int = len(perms)
     N: int = len(perms[0])
-    print(f"{M=} {N=}")
     total: int = 0
     for i, j in combinations(range(M), 2):
         total += kendall_tau_distance(perms[i], perms[j])
@@ -260,18 +253,18 @@ def main(n, trials):
         items = item_str.split('\n')
         lists = set()
         actual_lists = []
+        head = None
         for i in range(len(items)):
             import ast
             try:
                 this_item = ast.literal_eval(items[i])
-                lists.add(tuple(this_item))
                 actual_lists.append(this_item)
+                lists.add(tuple(this_item))
             except SyntaxError:
                 pass
 
         reduced_lists = list(map(lambda x: list(x), lists))
         inversions = count_all_list_pair_inversions(actual_lists)
-        print(inversions)
         kendall_dist = mean_pairwise_kendall_tau(actual_lists)
 
         import ast
@@ -285,15 +278,15 @@ def main(n, trials):
         #print(f"Expected draws to first non-duplicate ≈ {e_nondup}")
 
         print(f"N={n}, trials={trials}")
-        print(f"Mean Kendall distance: {kendall_dist}")
+        print(f"Mean Kendall distance: {kendall_dist:1.3f} (ideal near 0.5)")
         print(f"actual inversions: {inversions}")
         print(f"expected inversions: {theoretical_expected_inversions(trials, n)}")
-        print(f"ratio (actual over expected inversions): {(100 * inversions / theoretical_expected_inversions(trials, n)):2.3}%")
+        print(f"ratio (actual over expected inversions): {(100 * inversions / theoretical_expected_inversions(trials, n)):3.0f}%")
         
         print(f"Number of unique orderings: {len(set(items))} out of {len(items)}")
-        print(f"Percentage of duplicate orderings: {100 - (len(set(items)) * 100 / len(items))}%")
-        print(f"  (expected if random: {100*(trials-expected_unique_shuffles(n, trials))/trials:2.3}%)")
-        print(f"Shannon entropy (number of bits): {shannon_entropy(items)}")
+        print(f"Percentage of duplicate orderings: {100 - (len(set(items)) * 100 / len(items)):3.0f}%")
+        print(f"  (expected if random: {100*(trials-expected_unique_shuffles(n, trials))/trials:3.0f}%)")
+        print(f"Shannon entropy (number of bits): {shannon_entropy(items):3.3f}")
 
 if __name__ == '__main__':
     main()
