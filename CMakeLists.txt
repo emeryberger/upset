@@ -22,7 +22,7 @@ FetchContent_MakeAvailable(diehard)
 #
 # DieHard’s CMakeLists.txt resides in the "src" directory.
 #
-add_subdirectory(${diehard_SOURCE_DIR}/src ${CMAKE_CURRENT_BINARY_DIR}/diehard-build)
+##add_subdirectory(${diehard_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/diehard-build)
 
 #
 # Rename the resulting DieHard library to "libdiehard" for consistency,
