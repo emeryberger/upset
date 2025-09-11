@@ -18,13 +18,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(diehard)
 
 #
-# ─── ADD DIEHARD (BUILD IT FROM ITS "src" FOLDER) ───────────────────────────────
-#
-# DieHard’s CMakeLists.txt resides in the "src" directory.
-#
-##add_subdirectory(${diehard_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}/diehard-build)
-
-#
 # Rename the resulting DieHard library to "libdiehard" for consistency,
 # and ensure it’s built as a normal dynamic library (SHARED).
 # (If the DieHard CMakeLists defines a different target name, adjust accordingly.)
